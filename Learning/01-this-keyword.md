@@ -249,16 +249,68 @@ const fn = calc.add; // extract method - loses object context
 fn(1, 2); // TypeError or NaN - `this` is not calc!
 ```
 
-### After (Fix - Closure-based)
+### After (Fix - Using `.bind()`)
 ```js
-function bindBase(base) {
-  return function (a, b) {
-    return base + a + b; // `base` captured by closure, no `this` needed
-  };
-}
-
-const fn = bindBase(10);
+const fn = calc.add.bind(calc); // locks `this` to calc permanently
 console.log(fn(1, 2)); // => 13
+```
+
+### Why not use an arrow function or `self = this`?
+
+> **But wait — in Q1, `this` works fine inside `greet()`. Why is Q3 different?**
+
+It's actually NOT different! `calc.add(1, 2)` works perfectly — `this` is `calc` because there's an object before the dot. The Q3 problem is specifically about **extracting** the method to a variable:
+
+```js
+const fn = calc.add; // detach method from calc
+fn(1, 2);            // no object before the dot → `this` is lost
+```
+
+So we need a fix that survives extraction. Let's see why arrow functions and `self = this` **don't** help:
+
+#### Bad Attempt 1: Arrow function as method
+
+```js
+const calc = {
+  base: 10,
+  add(a, b) => {                 // SyntaxError!
+    return this.base + a + b;
+  },
+};
+```
+
+`add(a, b) => {}` is **invalid syntax** — you can't mix method shorthand with `=>`. The valid arrow form would be:
+
+```js
+const calc = {
+  base: 10,
+  add: (a, b) => this.base + a + b,  // No SyntaxError, but `this` is WRONG
+};
+```
+
+Arrow functions inherit `this` from the **enclosing scope** where they are defined. An object literal `{}` is **not a scope** — it doesn't create its own `this`. So `this` here is the outer scope: `module.exports` (`{}`) in Node, `window` in browser. `this.base` would be `undefined`, not `10`.
+
+#### Bad Attempt 2: `self = this` as an object property
+
+```js
+const calc = {
+  base: 10,
+  self: this,          // `this` here is NOT calc!
+  add(a, b) {
+    return self + a + b; // `self` is {} (module.exports), not calc
+  },
+};
+```
+
+When JavaScript creates an object literal, `this` in property values refers to the **outer scope**, not the object being created. The object doesn't exist yet while its properties are being evaluated. Only **functions** and **classes** create a new `this` context — object literals don't. So `self` would be `{}` (`module.exports`) or `window`, not `calc`.
+
+#### Why `.bind()` is the right fix
+
+`.bind(calc)` creates a new function where `this` is **permanently** set to `calc`. Even when extracted to a variable, the bound function always knows its `this`:
+
+```js
+const fn = calc.add.bind(calc);
+fn(1, 2); // 13 — works even without calc. in front
 ```
 
 ---

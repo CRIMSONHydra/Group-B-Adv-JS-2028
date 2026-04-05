@@ -246,9 +246,9 @@ timer.start(); // => "Timer" (after 100ms)
 // ============================================
 // Problem: When you extract a method (const fn = obj.method), calling fn()
 //          loses the object context. `this` becomes undefined/global.
-// Solution: Use a closure (bindBase) that captures `base` as a regular variable.
+// Solution: Use .bind() to permanently attach `this` to the object.
 
-console.log("\n--- PRACTICE Q3: Lost this / bindBase ---");
+console.log("\n--- PRACTICE Q3: Lost this / bind ---");
 
 const calc = {
   base: 10,
@@ -264,15 +264,63 @@ console.log("calc.add(1,2):", calc.add(1, 2)); // => 13
 // const fn = calc.add;
 // fn(1, 2); // TypeError or NaN
 
-// Solution: closure-based function that doesn't rely on `this`
-function bindBase(base) {
-  return function (a, b) {
-    return base + a + b; // `base` is captured by closure, no `this` needed
-  };
-}
+// Solution: .bind(calc) locks `this` to calc permanently
+const fn = calc.add.bind(calc);
+console.log("bind(calc)(1,2):", fn(1, 2)); // => 13
 
-const fn = bindBase(10);
-console.log("bindBase(10)(1,2):", fn(1, 2)); // => 13
+// --------------------------------------------
+// Q3 DEEP DIVE: Why not use an arrow function or `self = this`?
+// --------------------------------------------
+//
+// You might wonder: "In Q1, `this` works fine inside greet(). Why can't we
+// just use `this` directly in calc too?"
+//
+// Answer: We CAN — calc.add(1,2) works perfectly! The problem is only when
+// we EXTRACT the method: `const fn = calc.add; fn(1,2);`
+// Now there's no object before the dot, so `this` is lost.
+//
+// --- BAD ATTEMPT 1: Arrow function as method ---
+//
+//   const calc = {
+//     base: 10,
+//     add(a, b) => {                 // SyntaxError!
+//       return this.base + a + b;
+//     },
+//   };
+//
+// `add(a, b) => {}` is INVALID syntax. You can't mix method shorthand with =>.
+// The valid arrow form would be:
+//
+//   const calc = {
+//     base: 10,
+//     add: (a, b) => this.base + a + b,   // No SyntaxError, but `this` is WRONG
+//   };
+//
+// Arrow functions inherit `this` from the ENCLOSING SCOPE where they are defined.
+// An object literal {} is NOT a scope — it doesn't create its own `this`.
+// So `this` here is the outer scope: module.exports ({}) in Node, window in browser.
+// `this.base` would be undefined, NOT 10.
+//
+// --- BAD ATTEMPT 2: `self = this` as an object property ---
+//
+//   const calc = {
+//     base: 10,
+//     self: this,                    // `this` here is NOT calc!
+//     add(a, b) {
+//       return self + a + b;         // `self` is {} (module.exports), not calc
+//     },
+//   };
+//
+// When JavaScript creates an object literal, `this` in property values refers
+// to the OUTER scope, not the object being created. The object doesn't exist
+// yet while its properties are being evaluated.
+// Only FUNCTIONS and CLASSES create a new `this` context — object literals don't.
+// So `self` would be {} (module.exports) or window, not calc.
+//
+// --- WHY .bind() IS THE RIGHT FIX ---
+// .bind(calc) creates a new function where `this` is permanently set to calc.
+// Even when extracted to a variable, the bound function always knows its `this`.
+// --------------------------------------------
 
 // ============================================
 // PRACTICE Q4: Global vs Method `this` (Strict Mode)
