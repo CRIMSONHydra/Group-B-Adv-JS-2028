@@ -117,6 +117,38 @@ retryWithBackoff(flakyFn, 3, 50)
 
 ---
 
+## Section 3: Promise.all with Concurrency Control (P3)
+
+### Before (Promise.all runs everything at once)
+```js
+// BAD: all tasks fire immediately - no concurrency control
+const results = await Promise.all(taskFns.map((fn) => fn()));
+```
+
+### After (Drop-in replacement with concurrency limit)
+```js
+function limitedPromiseAll(taskFns, limit) {
+  // Same scheduling logic as promisePool
+  return promisePool(taskFns, limit);
+}
+
+// Usage: same as Promise.all but with a limit
+const tasks = [
+  () => fetch("/api/1"),
+  () => fetch("/api/2"),
+  () => fetch("/api/3"),
+  () => fetch("/api/4"),
+];
+
+limitedPromiseAll(tasks, 2).then((results) => {
+  console.log(results); // all 4 results, but only 2 ran at a time
+});
+```
+
+> **Key difference from P1:** Same underlying logic, but framed as a production-grade `Promise.all` replacement. In practice, you'd reuse `promisePool`.
+
+---
+
 ## Section 4: Sequential Async Task Queue (P6)
 
 ### Before (Tasks run in parallel - no ordering)

@@ -17,6 +17,7 @@
 | `fn.bind(ctx)()` | `ctx` |
 | Arrow function | `this` from enclosing scope |
 | `setTimeout(fn)` | `globalThis` (or undefined) |
+| `setTimeout(() => ...)` | `this` from enclosing scope (arrow fix) |
 | `addEventListener` callback | the DOM element |
 
 ---
