@@ -1,4 +1,30 @@
 // ============================================
+// WHAT IS STRICT MODE?
+// ============================================
+// Strict mode is a restricted variant of JavaScript introduced in ES5.
+// It catches common coding mistakes, throws errors for unsafe actions,
+// and disables confusing or poorly thought-out features.
+//
+// Key differences in strict mode:
+//   - `this` in a plain function call is `undefined` (instead of globalThis)
+//   - Assigning to undeclared variables throws a ReferenceError
+//   - Deleting variables, functions, or function arguments is not allowed
+//   - Duplicate parameter names are not allowed
+//   - Octal literals (e.g., 0123) are not allowed
+//   - `with` statements are not allowed
+//   - `arguments` and `eval` cannot be reassigned
+//
+// HOW TO ENABLE STRICT MODE:
+//   1. For an entire file:  put "use strict"; at the very top of the file
+//   2. For a single function: put "use strict"; as the first line inside the function body
+//   3. ES modules (.mjs or type:"module") are ALWAYS in strict mode automatically
+//   4. Classes are ALWAYS in strict mode automatically
+//
+// NOTE: "use strict"; must be a string literal at the top — no code before it
+//       (comments are fine, but not statements).
+// ============================================
+
+// ============================================
 // 01 - THE `this` KEYWORD IN JAVASCRIPT
 // ============================================
 // Golden Rule: `this` depends on HOW a function is called, not WHERE it is written.
